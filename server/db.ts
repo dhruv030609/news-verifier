@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, submissions, analyses, visualVerifications, crossReferences, InsertSubmission, InsertAnalysis, InsertVisualVerification, InsertCrossReference } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,100 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// Analysis-related queries
+export async function createSubmission(submission: InsertSubmission) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(submissions).values(submission);
+  return { insertId: result[0]?.insertId || 0 };
+}
+
+export async function getSubmissionById(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select().from(submissions).where(eq(submissions.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createAnalysis(analysis: InsertAnalysis) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(analyses).values(analysis);
+  return { insertId: result[0]?.insertId || 0 };
+}
+
+export async function getAnalysisById(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select().from(analyses).where(eq(analyses.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getUserAnalyses(userId: number, limit = 20, offset = 0) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select().from(analyses)
+    .where(eq(analyses.userId, userId))
+    .orderBy((t) => t.createdAt)
+    .limit(limit)
+    .offset(offset);
+  return result;
+}
+
+export async function updateSubmissionStatus(submissionId: number, status: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(submissions)
+    .set({ status: status as any, updatedAt: new Date() })
+    .where(eq(submissions.id, submissionId));
+}
+
+export async function saveAnalysis(analysisId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(analyses)
+    .set({ isSaved: true, updatedAt: new Date() })
+    .where(eq(analyses.id, analysisId));
+}
+
+export async function getSavedAnalyses(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select().from(analyses)
+    .where(eq(analyses.userId, userId) && eq(analyses.isSaved, true))
+    .orderBy((t) => t.createdAt);
+  return result;
+}
+
+export async function createVisualVerification(verification: InsertVisualVerification) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(visualVerifications).values(verification);
+  return { insertId: result[0]?.insertId || 0 };
+}
+
+export async function createCrossReference(reference: InsertCrossReference) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(crossReferences).values(reference);
+  return { insertId: result[0]?.insertId || 0 };
+}
+
+export async function getCrossReferences(analysisId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select().from(crossReferences)
+    .where(eq(crossReferences.analysisId, analysisId));
+  return result;
+}

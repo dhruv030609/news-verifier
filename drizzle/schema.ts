@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, json, decimal, boolean } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -25,4 +25,91 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+/**
+ * Content submissions table - stores user-submitted content for analysis
+ */
+export const submissions = mysqlTable("submissions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  contentType: mysqlEnum("contentType", ["url", "text"]).notNull(),
+  content: text("content").notNull(),
+  title: varchar("title", { length: 500 }),
+  sourceUrl: varchar("sourceUrl", { length: 2048 }),
+  status: mysqlEnum("status", ["pending", "analyzing", "completed", "failed"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Submission = typeof submissions.$inferSelect;
+export type InsertSubmission = typeof submissions.$inferInsert;
+
+/**
+ * Analysis results table - stores credibility analysis results
+ */
+export const analyses = mysqlTable("analyses", {
+  id: int("id").autoincrement().primaryKey(),
+  submissionId: int("submissionId").notNull(),
+  userId: int("userId").notNull(),
+  credibilityScore: int("credibilityScore").notNull(),
+  scoreCategory: mysqlEnum("scoreCategory", ["high_misinformation", "questionable", "likely_credible", "highly_credible"]).notNull(),
+  
+  // Structured analysis results
+  headlineAnalysis: json("headlineAnalysis"),
+  bodyAnalysis: json("bodyAnalysis"),
+  evidenceAnalysis: json("evidenceAnalysis"),
+  redFlags: json("redFlags"),
+  
+  // Source assessment
+  publisherReputation: mysqlEnum("publisherReputation", ["known", "unknown", "problematic"]).notNull(),
+  journalisticStandards: mysqlEnum("journalisticStandards", ["met", "partially_met", "not_met"]).notNull(),
+  potentialBias: mysqlEnum("potentialBias", ["left", "right", "center", "mixed"]).notNull(),
+  
+  // Verification status
+  confirmedByCredibleSources: mysqlEnum("confirmedByCredibleSources", ["yes", "no", "partial"]).notNull(),
+  factCheckerConsensus: mysqlEnum("factCheckerConsensus", ["true", "false", "mixed", "unverified"]).notNull(),
+  
+  // Key findings and recommendations
+  keyFindings: json("keyFindings"),
+  recommendations: json("recommendations"),
+  rawAnalysis: text("rawAnalysis"),
+  
+  isSaved: boolean("isSaved").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Analysis = typeof analyses.$inferSelect;
+export type InsertAnalysis = typeof analyses.$inferInsert;
+
+/**
+ * Visual content verification table - stores image analysis results
+ */
+export const visualVerifications = mysqlTable("visualVerifications", {
+  id: int("id").autoincrement().primaryKey(),
+  analysisId: int("analysisId").notNull(),
+  imageUrl: varchar("imageUrl", { length: 2048 }).notNull(),
+  manipulationDetected: boolean("manipulationDetected").notNull(),
+  deepfakeScore: int("deepfakeScore"),
+  metadata: json("metadata"),
+  findings: text("findings"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type VisualVerification = typeof visualVerifications.$inferSelect;
+export type InsertVisualVerification = typeof visualVerifications.$inferInsert;
+
+/**
+ * Cross-reference verification table - stores fact-checking database matches
+ */
+export const crossReferences = mysqlTable("crossReferences", {
+  id: int("id").autoincrement().primaryKey(),
+  analysisId: int("analysisId").notNull(),
+  factCheckSource: varchar("factCheckSource", { length: 255 }).notNull(),
+  claimMatched: text("claimMatched"),
+  verdict: mysqlEnum("verdict", ["true", "false", "mixed", "unverified"]).notNull(),
+  sourceUrl: varchar("sourceUrl", { length: 2048 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CrossReference = typeof crossReferences.$inferSelect;
+export type InsertCrossReference = typeof crossReferences.$inferInsert;
