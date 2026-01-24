@@ -7,6 +7,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Analyze from "./pages/Analyze";
 import Results from "./pages/Results";
+import Dashboard from "./pages/Dashboard";
+import ImageVerification from "./pages/ImageVerification";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -15,6 +17,8 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/analyze"} component={Analyze} />
       <Route path={"/results/:id"} component={Results} />
+      <Route path={"/dashboard"} component={Dashboard} />
+      <Route path={"/verify-image/:id"} component={ImageVerification} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

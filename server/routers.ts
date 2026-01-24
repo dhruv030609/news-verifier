@@ -3,11 +3,12 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { createSubmission, getUserAnalyses, getAnalysisById, saveAnalysis, getSavedAnalyses } from "./db";
+import { createSubmission, getUserAnalyses, getAnalysisById, saveAnalysis, getSavedAnalyses, getDb } from "./db";
 import { analyzeContent, analyzeVisualContent, performCrossReferenceCheck } from "./analysisEngine";
+import { analyses } from "../drizzle/schema";
+import { eq, desc } from "drizzle-orm";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -17,6 +18,26 @@ export const appRouter = router({
       return {
         success: true,
       } as const;
+    }),
+  }),
+
+  dashboard: router({
+    getAnalysisHistory: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(analyses).where(eq(analyses.userId, ctx.user.id)).orderBy(desc(analyses.createdAt)).limit(50);
+    }),
+    getStatistics: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return { totalAnalyses: 0, averageScore: 0, savedCount: 0 };
+      const userAnalyses = await db.select().from(analyses).where(eq(analyses.userId, ctx.user.id));
+      const savedAnalyses = userAnalyses.filter(a => a.isSaved);
+      const avgScore = userAnalyses.length > 0 ? Math.round(userAnalyses.reduce((sum, a) => sum + a.credibilityScore, 0) / userAnalyses.length) : 0;
+      return {
+        totalAnalyses: userAnalyses.length,
+        averageScore: avgScore,
+        savedCount: savedAnalyses.length,
+      };
     }),
   }),
 

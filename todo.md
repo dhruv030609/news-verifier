@@ -9,6 +9,9 @@
 - [ ] Add cross-reference verification against fact-checking databases
 - [ ] Implement visual content verification for images
 - [x] Add red flag detection system
+- [x] Add tRPC procedures for dashboard queries
+- [ ] Add tRPC procedures for save/bookmark functionality
+- [ ] Add tRPC procedures for share functionality
 
 ## Frontend UI
 - [x] Create elegant global styling and color palette
@@ -16,10 +19,12 @@
 - [x] Create content submission interface (URL and text input)
 - [x] Build analysis results display page
 - [x] Implement credibility score visualization
-- [ ] Create user dashboard for analysis history
+- [x] Create user dashboard for analysis history
 - [x] Add real-time analysis results display
 - [ ] Implement save/bookmark functionality
 - [ ] Add share functionality
+- [x] Add image upload and verification UI
+- [ ] Add cross-reference verification display
 
 ## Features
 - [x] Content submission with URL and text input
@@ -27,11 +32,16 @@
 - [x] Structured credibility scoring (0-100)
 - [ ] Visual content verification
 - [ ] Cross-reference verification
-- [ ] User dashboard with history
+- [x] User dashboard with history
 - [x] Real-time analysis display
 - [x] Database storage for results
+- [ ] Save/bookmark analyses
+- [ ] Share analyses with others
+- [ ] Analysis statistics and trends
 
 ## Testing & Deployment
-- [ ] Write unit tests for analysis engine
-- [ ] Test all frontend pages
+- [x] Write unit tests for analysis engine
+- [ ] Write tests for dashboard features
+- [ ] Write tests for save/share features
+- [x] Test all frontend pages
 - [ ] Create checkpoint for deployment
