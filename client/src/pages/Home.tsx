@@ -28,9 +28,17 @@ export default function Home() {
                 </Link>
               </>
             ) : (
-              <a href={getLoginUrl()}>
-                <Button>Sign In</Button>
-              </a>
+              <div className="flex items-center gap-2">
+                <a href={getLoginUrl()}>
+                  <Button>Sign In</Button>
+                </a>
+                {/* Mock login for local development */}
+                {typeof window !== 'undefined' && window.location.hostname === 'localhost' && (
+                  <a href="/api/mock-login">
+                    <Button variant="outline" size="sm">Dev Login</Button>
+                  </a>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -54,11 +62,21 @@ export default function Home() {
                   </Button>
                 </Link>
               ) : (
-                <a href={getLoginUrl()}>
-                  <Button size="lg" className="gap-2">
-                    Get Started Free <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </a>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <a href={getLoginUrl()}>
+                    <Button size="lg" className="gap-2">
+                      Get Started Free <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </a>
+                  {/* Mock login for local development */}
+                  {typeof window !== 'undefined' && window.location.hostname === 'localhost' && (
+                    <a href="/api/mock-login">
+                      <Button size="lg" variant="outline" className="gap-2">
+                        Dev Login <ArrowRight className="w-4 h-4" />
+                      </Button>
+                    </a>
+                  )}
+                </div>
               )}
               <Button size="lg" variant="outline">
                 Learn More
