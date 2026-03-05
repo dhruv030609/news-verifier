@@ -15,6 +15,13 @@
       "when": 1769168212387,
       "tag": "0001_numerous_jack_power",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1772692579498,
+      "tag": "0002_nosy_stryfe",
+      "breakpoints": true
     }
   ]
 }

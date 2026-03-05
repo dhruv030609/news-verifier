@@ -23,6 +23,9 @@ export default function Home() {
                 <Link href="/analyze">
                   <Button variant="outline">Analyze Content</Button>
                 </Link>
+                <Link href="/my-articles">
+                  <Button variant="outline">My Articles</Button>
+                </Link>
                 <Link href="/dashboard">
                   <Button>Dashboard</Button>
                 </Link>

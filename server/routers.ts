@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { createSubmission, getUserAnalyses, getAnalysisById, saveAnalysis, getSavedAnalyses, getDb } from "./db";
+import { createSubmission, getUserAnalyses, getAnalysisById, saveAnalysis, getSavedAnalyses, getDb, createArticle, getArticleById, getUserArticles, getPublicArticles, updateArticleStatus, publishArticle, incrementArticleViews } from "./db";
 import { analyzeContent, analyzeVisualContent, performCrossReferenceCheck } from "./analysisEngine";
 import { analyses } from "../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
@@ -148,6 +148,80 @@ export const appRouter = router({
         }
         const references = await performCrossReferenceCheck(input.claim, input.analysisId);
         return references;
+      }),
+  }),
+
+  articles: router({
+    submit: protectedProcedure
+      .input(z.object({
+        title: z.string().min(5).max(500),
+        content: z.string().min(50),
+        author: z.string().optional(),
+        sourceUrl: z.string().url().optional(),
+        publicationDate: z.date().optional(),
+        category: z.enum(["politics", "health", "science", "business", "technology", "other"]).default("other"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const article = await createArticle({
+          userId: ctx.user.id,
+          title: input.title,
+          content: input.content,
+          author: input.author || null,
+          sourceUrl: input.sourceUrl || null,
+          publicationDate: input.publicationDate || null,
+          category: input.category,
+          status: "draft",
+          isPublic: false,
+          viewCount: 0,
+        });
+        return { articleId: article.insertId, status: "draft" };
+      }),
+
+    getUserArticles: protectedProcedure
+      .input(z.object({
+        limit: z.number().min(1).max(100).default(20),
+        offset: z.number().min(0).default(0),
+      }))
+      .query(async ({ ctx, input }) => {
+        return getUserArticles(ctx.user.id, input.limit, input.offset);
+      }),
+
+    getArticle: protectedProcedure
+      .input(z.object({
+        articleId: z.number(),
+      }))
+      .query(async ({ ctx, input }) => {
+        const article = await getArticleById(input.articleId);
+        if (!article) throw new Error("Article not found");
+        if (article.userId !== ctx.user.id && !article.isPublic) {
+          throw new Error("Unauthorized");
+        }
+        if (article.isPublic) {
+          await incrementArticleViews(input.articleId);
+        }
+        return article;
+      }),
+
+    publish: protectedProcedure
+      .input(z.object({
+        articleId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const article = await getArticleById(input.articleId);
+        if (!article || article.userId !== ctx.user.id) {
+          throw new Error("Article not found");
+        }
+        await publishArticle(input.articleId);
+        return { success: true, status: "submitted" };
+      }),
+
+    getPublicArticles: publicProcedure
+      .input(z.object({
+        limit: z.number().min(1).max(100).default(20),
+        offset: z.number().min(0).default(0),
+      }))
+      .query(async ({ input }) => {
+        return getPublicArticles(input.limit, input.offset);
       }),
   }),
 });

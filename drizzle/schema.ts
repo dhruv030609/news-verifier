@@ -113,3 +113,27 @@ export const crossReferences = mysqlTable("crossReferences", {
 
 export type CrossReference = typeof crossReferences.$inferSelect;
 export type InsertCrossReference = typeof crossReferences.$inferInsert;
+
+/**
+ * User-submitted articles table - stores articles submitted by users for verification
+ */
+export const articles = mysqlTable("articles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  title: varchar("title", { length: 500 }).notNull(),
+  content: text("content").notNull(),
+  sourceUrl: varchar("sourceUrl", { length: 2048 }),
+  author: varchar("author", { length: 255 }),
+  publicationDate: timestamp("publicationDate"),
+  category: mysqlEnum("category", ["politics", "health", "science", "business", "technology", "other"]).default("other").notNull(),
+  status: mysqlEnum("status", ["draft", "submitted", "under_review", "verified", "rejected"]).default("draft").notNull(),
+  verificationScore: int("verificationScore"),
+  verificationNotes: text("verificationNotes"),
+  viewCount: int("viewCount").default(0).notNull(),
+  isPublic: boolean("isPublic").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Article = typeof articles.$inferSelect;
+export type InsertArticle = typeof articles.$inferInsert;

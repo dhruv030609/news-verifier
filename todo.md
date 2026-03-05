@@ -38,10 +38,16 @@
 - [ ] Save/bookmark analyses
 - [ ] Share analyses with others
 - [ ] Analysis statistics and trends
+- [x] User article submission
+- [x] Article management interface
+- [x] Article storage and retrieval
+- [ ] Article verification workflow
+- [ ] Article publishing and sharing
 
 ## Testing & Deployment
 - [x] Write unit tests for analysis engine
 - [ ] Write tests for dashboard features
 - [ ] Write tests for save/share features
 - [x] Test all frontend pages
+- [x] Write unit tests for article submission
 - [ ] Create checkpoint for deployment

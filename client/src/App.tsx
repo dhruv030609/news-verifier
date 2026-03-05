@@ -9,6 +9,9 @@ import Analyze from "./pages/Analyze";
 import Results from "./pages/Results";
 import Dashboard from "./pages/Dashboard";
 import ImageVerification from "./pages/ImageVerification";
+import SubmitArticle from "./pages/SubmitArticle";
+import MyArticles from "./pages/MyArticles";
+import ArticleDetail from "./pages/ArticleDetail";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -19,6 +22,9 @@ function Router() {
       <Route path={"/results/:id"} component={Results} />
       <Route path={"/dashboard"} component={Dashboard} />
       <Route path={"/verify-image/:id"} component={ImageVerification} />
+      <Route path={"/submit-article"} component={SubmitArticle} />
+      <Route path={"/my-articles"} component={MyArticles} />
+      <Route path={"/article/:id"} component={ArticleDetail} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

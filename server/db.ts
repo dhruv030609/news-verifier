@@ -1,6 +1,6 @@
-import { eq, and } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, submissions, analyses, visualVerifications, crossReferences, InsertSubmission, InsertAnalysis, InsertVisualVerification, InsertCrossReference } from "../drizzle/schema";
+import { InsertUser, users, submissions, analyses, visualVerifications, crossReferences, articles, InsertSubmission, InsertAnalysis, InsertVisualVerification, InsertCrossReference, InsertArticle } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -185,4 +185,79 @@ export async function getCrossReferences(analysisId: number) {
   const result = await db.select().from(crossReferences)
     .where(eq(crossReferences.analysisId, analysisId));
   return result;
+}
+
+// Article-related queries
+export async function createArticle(article: InsertArticle) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(articles).values(article);
+  return { insertId: result[0]?.insertId || 0 };
+}
+
+export async function getArticleById(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select().from(articles).where(eq(articles.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getUserArticles(userId: number, limit = 20, offset = 0) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select().from(articles)
+    .where(eq(articles.userId, userId))
+    .orderBy(desc(articles.createdAt))
+    .limit(limit)
+    .offset(offset);
+  return result;
+}
+
+export async function getPublicArticles(limit = 20, offset = 0) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select().from(articles)
+    .where(and(eq(articles.isPublic, true), eq(articles.status, "verified")))
+    .orderBy(desc(articles.createdAt))
+    .limit(limit)
+    .offset(offset);
+  return result;
+}
+
+export async function updateArticleStatus(articleId: number, status: string, verificationScore?: number, verificationNotes?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const updateData: any = { status: status as any, updatedAt: new Date() };
+  if (verificationScore !== undefined) updateData.verificationScore = verificationScore;
+  if (verificationNotes !== undefined) updateData.verificationNotes = verificationNotes;
+  
+  await db.update(articles)
+    .set(updateData)
+    .where(eq(articles.id, articleId));
+}
+
+export async function incrementArticleViews(articleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const article = await getArticleById(articleId);
+  if (!article) return;
+  
+  await db.update(articles)
+    .set({ viewCount: (article.viewCount || 0) + 1 })
+    .where(eq(articles.id, articleId));
+}
+
+export async function publishArticle(articleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(articles)
+    .set({ isPublic: true, status: "submitted", updatedAt: new Date() })
+    .where(eq(articles.id, articleId));
 }
