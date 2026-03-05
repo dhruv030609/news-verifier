@@ -46,7 +46,7 @@ export const appRouter = router({
     submit: protectedProcedure
       .input(z.object({
         contentType: z.enum(["url", "text"]),
-        content: z.string().min(10),
+        content: z.string().min(5),
         title: z.string().optional(),
         sourceUrl: z.string().url().optional(),
       }))
