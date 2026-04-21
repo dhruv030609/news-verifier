@@ -246,6 +246,4 @@ This project is built on the Manus platform.
 
 ---
 
-**Built with ❤️ using Manus**
 
-For support, visit https://help.manus.im
