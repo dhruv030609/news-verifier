@@ -137,3 +137,45 @@ export const articles = mysqlTable("articles", {
 
 export type Article = typeof articles.$inferSelect;
 export type InsertArticle = typeof articles.$inferInsert;
+
+/**
+ * Image news verification table - stores image-based news analysis
+ */
+export const imageNewsVerifications = mysqlTable("imageNewsVerifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  imageUrl: varchar("imageUrl", { length: 2048 }).notNull(),
+  imageKey: varchar("imageKey", { length: 500 }).notNull(),
+  
+  // OCR extracted text from image
+  extractedText: text("extractedText"),
+  
+  // Image analysis
+  imageDescription: text("imageDescription"),
+  manipulationScore: int("manipulationScore"), // 0-100, higher = more likely manipulated
+  deepfakeScore: int("deepfakeScore"), // 0-100, higher = more likely deepfake
+  authenticityScore: int("authenticityScore"), // 0-100, higher = more authentic
+  
+  // News analysis from extracted text
+  newsCredibilityScore: int("newsCredibilityScore"), // 0-100
+  newsCategory: mysqlEnum("newsCategory", ["politics", "health", "science", "business", "technology", "entertainment", "sports", "other"]).default("other").notNull(),
+  
+  // Analysis results
+  redFlags: json("redFlags"), // Array of red flags found
+  keyFindings: json("keyFindings"), // Array of key findings
+  recommendations: json("recommendations"), // Array of recommendations
+  
+  // Verification status
+  status: mysqlEnum("status", ["pending", "analyzing", "completed", "failed"]).default("pending").notNull(),
+  rawAnalysis: text("rawAnalysis"), // Full LLM analysis response
+  
+  // Metadata
+  imageMetadata: json("imageMetadata"), // Image properties (size, format, etc)
+  isSaved: boolean("isSaved").default(false).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ImageNewsVerification = typeof imageNewsVerifications.$inferSelect;
+export type InsertImageNewsVerification = typeof imageNewsVerifications.$inferInsert;

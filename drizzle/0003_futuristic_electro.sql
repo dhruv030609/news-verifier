@@ -1,0 +1,23 @@
+CREATE TABLE `imageNewsVerifications` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`imageUrl` varchar(2048) NOT NULL,
+	`imageKey` varchar(500) NOT NULL,
+	`extractedText` text,
+	`imageDescription` text,
+	`manipulationScore` int,
+	`deepfakeScore` int,
+	`authenticityScore` int,
+	`newsCredibilityScore` int,
+	`newsCategory` enum('politics','health','science','business','technology','entertainment','sports','other') NOT NULL DEFAULT 'other',
+	`redFlags` json,
+	`keyFindings` json,
+	`recommendations` json,
+	`status` enum('pending','analyzing','completed','failed') NOT NULL DEFAULT 'pending',
+	`rawAnalysis` text,
+	`imageMetadata` json,
+	`isSaved` boolean NOT NULL DEFAULT false,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `imageNewsVerifications_id` PRIMARY KEY(`id`)
+);

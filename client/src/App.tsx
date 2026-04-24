@@ -9,6 +9,7 @@ import Analyze from "./pages/Analyze";
 import Results from "./pages/Results";
 import Dashboard from "./pages/Dashboard";
 import ImageVerification from "./pages/ImageVerification";
+import VerifyImage from "./pages/VerifyImage";
 import SubmitArticle from "./pages/SubmitArticle";
 import MyArticles from "./pages/MyArticles";
 import ArticleDetail from "./pages/ArticleDetail";
@@ -21,7 +22,8 @@ function Router() {
       <Route path={"/analyze"} component={Analyze} />
       <Route path={"/results/:id"} component={Results} />
       <Route path={"/dashboard"} component={Dashboard} />
-      <Route path={"/verify-image/:id"} component={ImageVerification} />
+      <Route path={"/image-verification"} component={ImageVerification} />
+      <Route path={"/verify-image"} component={VerifyImage} />
       <Route path={"/submit-article"} component={SubmitArticle} />
       <Route path={"/my-articles"} component={MyArticles} />
       <Route path={"/article/:id"} component={ArticleDetail} />

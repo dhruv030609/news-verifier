@@ -3,9 +3,10 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { createSubmission, getUserAnalyses, getAnalysisById, saveAnalysis, getSavedAnalyses, getDb, createArticle, getArticleById, getUserArticles, getPublicArticles, updateArticleStatus, publishArticle, incrementArticleViews } from "./db";
+import { createSubmission, getUserAnalyses, getAnalysisById, saveAnalysis, getSavedAnalyses, getDb, createArticle, getArticleById, getUserArticles, getPublicArticles, updateArticleStatus, publishArticle, incrementArticleViews, createImageNewsVerification, getImageNewsVerificationById, getUserImageVerifications, toggleSaveImageVerification, deleteImageNewsVerification, getSavedImageVerifications } from "./db";
 import { analyzeContent, analyzeVisualContent, performCrossReferenceCheck } from "./analysisEngine";
-import { analyses } from "../drizzle/schema";
+import { analyzeImageNews } from "./imageAnalysisEngine";
+import { analyses, imageNewsVerifications } from "../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
 
 export const appRouter = router({
@@ -222,6 +223,85 @@ export const appRouter = router({
       }))
       .query(async ({ input }) => {
         return getPublicArticles(input.limit, input.offset);
+      }),
+  }),
+
+  imageVerification: router({
+    analyze: protectedProcedure
+      .input(z.object({
+        imageUrl: z.string().url(),
+        imageDescription: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const analysisResult = await analyzeImageNews({
+            imageUrl: input.imageUrl,
+            imageDescription: input.imageDescription,
+          });
+
+          await createImageNewsVerification({
+            userId: ctx.user.id,
+            imageUrl: input.imageUrl,
+            imageKey: `image-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            extractedText: analysisResult.extractedText,
+            imageDescription: analysisResult.imageDescription,
+            manipulationScore: analysisResult.manipulationScore,
+            deepfakeScore: analysisResult.deepfakeScore,
+            authenticityScore: analysisResult.authenticityScore,
+            newsCredibilityScore: analysisResult.newsCredibilityScore,
+            newsCategory: analysisResult.newsCategory as any,
+            redFlags: analysisResult.redFlags,
+            keyFindings: analysisResult.keyFindings,
+            recommendations: analysisResult.recommendations,
+            status: "completed",
+            rawAnalysis: analysisResult.rawAnalysis,
+            imageMetadata: { uploadedAt: new Date().toISOString() },
+            isSaved: false,
+          });
+
+          const db = await getDb();
+          if (!db) throw new Error("Database not available");
+          const records = await db.select().from(imageNewsVerifications).where(eq(imageNewsVerifications.userId, ctx.user.id)).orderBy(desc(imageNewsVerifications.createdAt)).limit(1);
+          
+          return { success: true, verification: records[0] || null };
+        } catch (error) {
+          console.error("[ImageVerification] Error:", error);
+          throw new Error("Failed to analyze image");
+        }
+      }),
+
+    getHistory: protectedProcedure
+      .input(z.object({ limit: z.number().default(20), offset: z.number().default(0) }))
+      .query(async ({ ctx, input }) => getUserImageVerifications(ctx.user.id, input.limit, input.offset)),
+
+    getById: protectedProcedure
+      .input(z.object({ verificationId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const v = await getImageNewsVerificationById(input.verificationId);
+        if (!v || v.userId !== ctx.user.id) throw new Error("Not found");
+        return v;
+      }),
+
+    toggleSave: protectedProcedure
+      .input(z.object({ verificationId: z.number(), isSaved: z.boolean() }))
+      .mutation(async ({ ctx, input }) => {
+        const v = await getImageNewsVerificationById(input.verificationId);
+        if (!v || v.userId !== ctx.user.id) throw new Error("Not found");
+        await toggleSaveImageVerification(input.verificationId, input.isSaved);
+        return { success: true };
+      }),
+
+    getSaved: protectedProcedure
+      .input(z.object({ limit: z.number().default(20), offset: z.number().default(0) }))
+      .query(async ({ ctx, input }) => getSavedImageVerifications(ctx.user.id, input.limit, input.offset)),
+
+    delete: protectedProcedure
+      .input(z.object({ verificationId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const v = await getImageNewsVerificationById(input.verificationId);
+        if (!v || v.userId !== ctx.user.id) throw new Error("Not found");
+        await deleteImageNewsVerification(input.verificationId);
+        return { success: true };
       }),
   }),
 });

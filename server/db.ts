@@ -1,6 +1,6 @@
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, desc as descOrder } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, submissions, analyses, visualVerifications, crossReferences, articles, InsertSubmission, InsertAnalysis, InsertVisualVerification, InsertCrossReference, InsertArticle } from "../drizzle/schema";
+import { InsertUser, users, submissions, analyses, visualVerifications, crossReferences, articles, imageNewsVerifications, InsertSubmission, InsertAnalysis, InsertVisualVerification, InsertCrossReference, InsertArticle, InsertImageNewsVerification, ImageNewsVerification } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -260,4 +260,80 @@ export async function publishArticle(articleId: number) {
   await db.update(articles)
     .set({ isPublic: true, status: "submitted", updatedAt: new Date() })
     .where(eq(articles.id, articleId));
+}
+
+
+// ============= Image News Verification Functions =============
+
+export async function createImageNewsVerification(data: InsertImageNewsVerification) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(imageNewsVerifications).values(data);
+  return result;
+}
+
+export async function getImageNewsVerificationById(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select().from(imageNewsVerifications)
+    .where(eq(imageNewsVerifications.id, id))
+    .limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getUserImageVerifications(userId: number, limit = 20, offset = 0) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select().from(imageNewsVerifications)
+    .where(eq(imageNewsVerifications.userId, userId))
+    .orderBy(desc(imageNewsVerifications.createdAt))
+    .limit(limit)
+    .offset(offset);
+  return result;
+}
+
+export async function updateImageNewsVerification(id: number, data: Partial<ImageNewsVerification>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const updateData: any = { ...data, updatedAt: new Date() };
+  delete updateData.id;
+  delete updateData.userId;
+  delete updateData.createdAt;
+  
+  await db.update(imageNewsVerifications)
+    .set(updateData)
+    .where(eq(imageNewsVerifications.id, id));
+}
+
+export async function toggleSaveImageVerification(id: number, isSaved: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(imageNewsVerifications)
+    .set({ isSaved, updatedAt: new Date() })
+    .where(eq(imageNewsVerifications.id, id));
+}
+
+export async function deleteImageNewsVerification(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(imageNewsVerifications)
+    .where(eq(imageNewsVerifications.id, id));
+}
+
+export async function getSavedImageVerifications(userId: number, limit = 20, offset = 0) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select().from(imageNewsVerifications)
+    .where(and(eq(imageNewsVerifications.userId, userId), eq(imageNewsVerifications.isSaved, true)))
+    .orderBy(desc(imageNewsVerifications.createdAt))
+    .limit(limit)
+    .offset(offset);
+  return result;
 }
