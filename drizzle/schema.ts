@@ -144,7 +144,7 @@ export type InsertArticle = typeof articles.$inferInsert;
 export const imageNewsVerifications = mysqlTable("imageNewsVerifications", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  imageUrl: varchar("imageUrl", { length: 2048 }).notNull(),
+  imageUrl: text("imageUrl").notNull(), // Changed to text to support large base64 strings
   imageKey: varchar("imageKey", { length: 500 }).notNull(),
   
   // OCR extracted text from image

@@ -1,0 +1,1 @@
+ALTER TABLE `imageNewsVerifications` MODIFY COLUMN `imageUrl` text NOT NULL;
