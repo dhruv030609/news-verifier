@@ -229,10 +229,13 @@ export const appRouter = router({
   imageVerification: router({
     analyze: protectedProcedure
       .input(z.object({
-        imageUrl: z.string().url().optional(),
-        imageBase64: z.string().optional(),
+        imageUrl: z.string().url().optional().nullable(),
+        imageBase64: z.string().optional().nullable(),
         imageDescription: z.string().optional(),
-      }))
+      }).refine(
+        (data) => data.imageUrl || data.imageBase64,
+        { message: "Either imageUrl or imageBase64 must be provided" }
+      ))
       .mutation(async ({ ctx, input }) => {
         try {
           // Use base64 if provided, otherwise use URL
