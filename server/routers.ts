@@ -229,19 +229,26 @@ export const appRouter = router({
   imageVerification: router({
     analyze: protectedProcedure
       .input(z.object({
-        imageUrl: z.string().url(),
+        imageUrl: z.string().url().optional(),
+        imageBase64: z.string().optional(),
         imageDescription: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         try {
+          // Use base64 if provided, otherwise use URL
+          const imageUrlToAnalyze = input.imageBase64 || input.imageUrl;
+          if (!imageUrlToAnalyze) {
+            throw new Error("Either imageUrl or imageBase64 must be provided");
+          }
+
           const analysisResult = await analyzeImageNews({
-            imageUrl: input.imageUrl,
+            imageUrl: imageUrlToAnalyze,
             imageDescription: input.imageDescription,
           });
 
           await createImageNewsVerification({
             userId: ctx.user.id,
-            imageUrl: input.imageUrl,
+            imageUrl: imageUrlToAnalyze,
             imageKey: `image-${Date.now()}-${Math.random().toString(36).substring(7)}`,
             extractedText: analysisResult.extractedText,
             imageDescription: analysisResult.imageDescription,

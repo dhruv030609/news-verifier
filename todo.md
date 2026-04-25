@@ -56,3 +56,11 @@
 - [x] Write unit tests for article submission
 - [x] Write unit tests for image verification
 - [ ] Create checkpoint for deployment
+
+## Image Upload Feature (NEW)
+- [x] Update backend to handle file uploads with base64 encoding
+- [x] Create file upload tRPC procedure
+- [x] Build drag-and-drop file upload UI
+- [x] Implement file validation (size, format)
+- [x] Add file preview before analysis
+- [x] Test file upload workflow
