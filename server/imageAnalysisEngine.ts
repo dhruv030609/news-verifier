@@ -34,11 +34,14 @@ export interface ImageAnalysisResult {
  */
 export async function analyzeImageNews(request: ImageAnalysisRequest): Promise<ImageAnalysisResult> {
   try {
+    // Ensure imageUrl is in proper format for LLM
+    const imageUrl = normalizeImageUrl(request.imageUrl);
+    
     // Step 1: Extract text from image using LLM vision capabilities
-    const extractedText = await extractTextFromImage(request.imageUrl);
+    const extractedText = await extractTextFromImage(imageUrl);
     
     // Step 2: Analyze image for manipulation and deepfakes
-    const imageAnalysis = await analyzeImageManipulation(request.imageUrl, extractedText);
+    const imageAnalysis = await analyzeImageManipulation(imageUrl, extractedText);
     
     // Step 3: Analyze the extracted text as news content
     const newsAnalysis = await analyzeNewsContent(extractedText);
@@ -63,6 +66,24 @@ export async function analyzeImageNews(request: ImageAnalysisRequest): Promise<I
     console.error("[ImageAnalysis] Error analyzing image:", error);
     throw error;
   }
+}
+
+/**
+ * Normalize image URL to ensure it's in a format the LLM can process
+ * Converts base64 strings to data URLs
+ */
+function normalizeImageUrl(imageUrl: string): string {
+  // If it's already a data URL or http(s) URL, return as-is
+  if (imageUrl.startsWith('data:') || imageUrl.startsWith('http')) {
+    return imageUrl;
+  }
+  
+  // If it's a base64 string without data URL prefix, add it
+  if (imageUrl.length > 100 && !imageUrl.includes('/')) {
+    return `data:image/jpeg;base64,${imageUrl}`;
+  }
+  
+  return imageUrl;
 }
 
 /**
@@ -101,7 +122,7 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
     return extractedText;
   } catch (error) {
     console.error("[ImageAnalysis] Error extracting text:", error);
-    throw error;
+    throw new Error(`Failed to extract text from image: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
