@@ -249,10 +249,14 @@ export const appRouter = router({
             imageDescription: input.imageDescription,
           });
 
+          // Don't store the full base64 image in DB, only store a reference
+          const imageKey = `image-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+          const imageReference = input.imageUrl || `base64-${imageKey}`; // Store URL or reference, not full base64
+          
           await createImageNewsVerification({
             userId: ctx.user.id,
-            imageUrl: imageUrlToAnalyze,
-            imageKey: `image-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            imageUrl: imageReference,
+            imageKey: imageKey,
             extractedText: analysisResult.extractedText,
             imageDescription: analysisResult.imageDescription,
             manipulationScore: analysisResult.manipulationScore,
